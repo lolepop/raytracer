@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using OpenTK;
 
 namespace another_raytracer
@@ -18,6 +19,9 @@ namespace another_raytracer
 		public Vector3 BackgroundColour { get; set; } = new Vector3(0.1f);
 
 		private Vector3 origin = new Vector3(0, 0, -1);
+
+		public static Vertex[] vertices;
+		public object locker = new Object();
 
 		public World(int screenWidth, int screenHeight)
 		{
@@ -100,7 +104,7 @@ namespace another_raytracer
 
 		private double i = 0;
 
-		public void RenderWorld(ref Vertex[] vertices, double delta)
+		public void RenderWorld(double delta)
 		{
 			i += delta;
 
@@ -123,6 +127,8 @@ namespace another_raytracer
 
 			float aspectRatio = (float)ScreenWidth / ScreenHeight;
 
+			var e = new CountdownEvent(World.vertices.Length);
+
 			for (int y = 0; y < ScreenHeight; y++)
 			{
 				for (int x = 0; x < ScreenWidth; x++)
@@ -134,15 +140,26 @@ namespace another_raytracer
 					Vector3 ov = new Vector3(xMapped, yMapped, 0) - origin;
 					Ray ray = new Ray(origin, ov.Normalized());
 
-					var colour = CastRay(ray).Clamp(0f, 1f);
-					vertices[y * ScreenWidth + x].r = colour.X;
-					vertices[y * ScreenWidth + x].g = colour.Y;
-					vertices[y * ScreenWidth + x].b = colour.Z;
+					ThreadPool.QueueUserWorkItem(new WaitCallback(state => {
+						lock (locker)
+						{
+							object[] args = state as object[];
+
+							var colour = CastRay(ray).Clamp(0f, 1f);
+							World.vertices[(int)args[0]].r = colour.X;
+							World.vertices[(int)args[0]].g = colour.Y;
+							World.vertices[(int)args[0]].b = colour.Z;
+
+							e.Signal();
+						}
+					}), new object[] { y * ScreenWidth + x });
 
 				}
 			}
-		}
 
+			e.Wait();
+
+		}
 
 
 	}

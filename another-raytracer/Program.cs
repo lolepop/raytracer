@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Runtime.InteropServices;
 using OpenTK;
 using OpenTK.Graphics;
@@ -19,11 +20,11 @@ namespace another_raytracer
 
 		//[StructLayout(LayoutKind.Sequential, Pack = 1)]
 
-		private Vertex[] vertices;
+		//private Vertex[] vertices;
 
 		public Game(int width, int height, string title) : base(width, height, GraphicsMode.Default, title)
 		{
-			vertices = new Vertex[width * height];
+			Vertex[] vertices = new Vertex[width * height];
 			world = new World(width, height);
 
 			for (int y = 0; y < height; y++)
@@ -40,6 +41,8 @@ namespace another_raytracer
 				}
 			}
 
+			World.vertices = vertices;
+
 		}
 
 		protected override void OnLoad(EventArgs e)
@@ -51,7 +54,7 @@ namespace another_raytracer
 
 		private void Update(double delta)
 		{
-			world.RenderWorld(ref vertices, delta);
+			world.RenderWorld(delta);
 		}
 
 		private void HandleInput()
@@ -80,7 +83,7 @@ namespace another_raytracer
 			GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
 			unsafe
 			{
-				GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(Vertex), vertices, BufferUsageHint.StaticDraw);
+				GL.BufferData(BufferTarget.ArrayBuffer, World.vertices.Length * sizeof(Vertex), World.vertices, BufferUsageHint.StaticDraw);
 			}
 
 			// load shaders
@@ -120,13 +123,13 @@ namespace another_raytracer
 			GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
 			unsafe
 			{
-				GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(Vertex), vertices, BufferUsageHint.StaticDraw);
+				GL.BufferData(BufferTarget.ArrayBuffer, World.vertices.Length * sizeof(Vertex), World.vertices, BufferUsageHint.StaticDraw);
 			}
 
 			GL.BindVertexArray(vao);
 			GL.UseProgram(program);
 
-			GL.DrawArrays(PrimitiveType.Points, 0, vertices.Length);
+			GL.DrawArrays(PrimitiveType.Points, 0, World.vertices.Length);
 
 			Context.SwapBuffers();
 
@@ -155,6 +158,10 @@ namespace another_raytracer
 
 	class Program
 	{
-		static void Main(string[] args) => (new Game(800, 600, "ray tracing")).Run(60.0);
+		static void Main(string[] args)
+		{
+			//ThreadPool.SetMaxThreads(20, 20);
+			(new Game(800, 600, "ray tracing")).Run(60.0);
+		}
 	}
 }
