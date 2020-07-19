@@ -1,0 +1,1 @@
+my weekend project to rewrite my old ray tracer with better math and in opengl from scratch
