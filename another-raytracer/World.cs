@@ -141,17 +141,18 @@ namespace another_raytracer
 					Ray ray = new Ray(origin, ov.Normalized());
 
 					ThreadPool.QueueUserWorkItem(new WaitCallback(state => {
+						object[] args = state as object[];
+						var colour = CastRay(ray).Clamp(0f, 1f);
+
 						lock (locker)
 						{
-							object[] args = state as object[];
-
-							var colour = CastRay(ray).Clamp(0f, 1f);
 							World.vertices[(int)args[0]].r = colour.X;
 							World.vertices[(int)args[0]].g = colour.Y;
 							World.vertices[(int)args[0]].b = colour.Z;
 
 							e.Signal();
 						}
+
 					}), new object[] { y * ScreenWidth + x });
 
 				}
