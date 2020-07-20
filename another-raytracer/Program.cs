@@ -54,6 +54,7 @@ namespace another_raytracer
 
 		private void Update(double delta)
 		{
+			Title = $"ray tracer - {1/delta:F2} fps";
 			world.RenderWorld(delta);
 		}
 
@@ -161,7 +162,7 @@ namespace another_raytracer
 		static void Main(string[] args)
 		{
 			//ThreadPool.SetMaxThreads(20, 20);
-			(new Game(800, 600, "ray tracing")).Run(60.0);
+			(new Game(400, 225, "ray tracing")).Run(60.0);
 		}
 	}
 }

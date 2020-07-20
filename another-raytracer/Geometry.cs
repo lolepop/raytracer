@@ -89,10 +89,11 @@ namespace another_raytracer
 			if (iBisect < 0) return (-1, -1);
 
 			double distsq = os.LengthSquared - Math.Pow(iBisect, 2);
-			float dist = (float)Math.Sqrt(distsq);
-			if (dist > Radius) return (-1, -1);
+			double radSq = Math.Pow(Radius, 2);
+			//float dist = (float)Math.Sqrt(distsq);
+			if (distsq > radSq) return (-1, -1);
 
-			float halfbisect = (float)Math.Sqrt(Math.Pow(Radius, 2) - distsq);
+			float halfbisect = (float)Math.Sqrt(radSq - distsq);
 
 			return (iBisect - halfbisect, iBisect + halfbisect);
 
