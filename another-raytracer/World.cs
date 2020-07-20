@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using OpenTK;
+using System.Drawing;
 
 namespace another_raytracer
 {
@@ -18,7 +19,9 @@ namespace another_raytracer
 		public int ScreenHeight { get; set; }
 		public Vector3 BackgroundColour { get; set; } = new Vector3(0.1f);
 
-		private Vector3 origin = new Vector3(0, 0, -1);
+		public Vector3 CamPos { get; set; } = new Vector3(0, 0, -1);
+		public static Vector3 CamDir { get; } = new Vector3(0, 0, 1);
+		public Matrix3 CamRot { get; set; } = Matrix3.CreateRotationX(0);
 
 		public static Vertex[] vertices;
 		public object locker = new Object();
@@ -28,10 +31,17 @@ namespace another_raytracer
 			ScreenWidth = screenWidth;
 			ScreenHeight = screenHeight;
 
-			objects.Add(new Sphere(new Vector3(-1, -1, 3), 1));
-			objects.Add(new Sphere(new Vector3(1, 2, 3), 1));
+			objects.Add(new Sphere(new Vector3(-1, -1, 2), 1));
+			objects.Add(new Sphere(new Vector3(1, 2, 2), 0.2f));
 			lights.Add(new Light(new Vector3(0, 10, 1), 5000f));
 			lights.Add(new Light(new Vector3(-10, -10, 1), 15000f));
+
+			// lol
+			objects[0].Colour = new Vector3(0.1f, 0, 0);
+			objects[0].Reflectivity = 0.8f;
+
+			objects[0].Pos = new Vector3(-1, 1, 2);
+			objects[1].Pos = new Vector3(1, 1, 2);
 
 		}
 
@@ -40,7 +50,7 @@ namespace another_raytracer
 			BackgroundColour = backgroundColour;
 		}
 
-		private Vector3 CastRay(Ray ray)
+		private Vector3 CastRay(Ray ray, int depth = 0)
 		{
 			(float i1, float i2) minIntersection = (float.MaxValue, float.MaxValue);
 			IIntersectable minObj = null;
@@ -57,7 +67,10 @@ namespace another_raytracer
 			}
 
 			if (minObj == null)
-				return BackgroundColour;
+				if (depth == 0)
+					return BackgroundColour;
+				else
+					return new Vector3(0);
 
 			Vector3 iPoint = ray.ToPoint(minIntersection.i1);
 			Vector3 iNormal = minObj.CalcNormal(iPoint, true);
@@ -94,6 +107,19 @@ namespace another_raytracer
 					Vector3 specular = minObj.SpecularColour * (float)Math.Pow(nh, minObj.Shininess) * minObj.Specular;
 
 					pointCol += diffuse * specular;
+
+				}
+
+				// handle reflective materials
+				if (minObj.Reflectivity > 0 && depth < 5)
+				{
+					Vector3 rVec = (il - 2 * Vector3.Dot(il, iNormal) * iNormal).Normalized();
+
+					Ray subRay = new Ray(iPoint + iNormal, rVec);
+					Vector3 rColour = CastRay(subRay, depth + 1);
+
+					pointCol += rColour * minObj.Reflectivity;
+
 				}
 
 			}
@@ -122,7 +148,7 @@ namespace another_raytracer
 				X = 0,
 				Y = 10 * (float)Math.Sin(i),
 				Z = 10 * (float)Math.Cos(i)
-			}; ;
+			};
 
 
 			float aspectRatio = (float)ScreenWidth / ScreenHeight;
@@ -134,11 +160,11 @@ namespace another_raytracer
 				for (int x = 0; x < ScreenWidth; x++)
 				{
 
-					float yMapped = ((y + 0.5f) / ScreenHeight) * 2 - 1 + origin.Y;
-					float xMapped = (((x + 0.5f) / ScreenWidth) * 2 - 1) * aspectRatio + origin.X;
+					float yMapped = ((y + 0.5f) / ScreenHeight) * 2 - 1;
+					float xMapped = (((x + 0.5f) / ScreenWidth) * 2 - 1) * aspectRatio;
 
-					Vector3 ov = new Vector3(xMapped, yMapped, 0) - origin;
-					Ray ray = new Ray(origin, ov.Normalized());
+					Vector3 ov = Vector3.Transform(new Vector3(xMapped, yMapped, 1), CamRot);
+					Ray ray = new Ray(CamPos, ov.Normalized());
 
 					ThreadPool.QueueUserWorkItem(new WaitCallback(state => {
 						var colour = CastRay(ray).Clamp(0f, 1f);

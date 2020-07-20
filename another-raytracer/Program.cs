@@ -18,6 +18,9 @@ namespace another_raytracer
 		private World world;
 		private int vbo, vao, frag, vertex, program;
 
+		const float pi2 = (float)Math.PI / 2;
+		const float camspeed = 0.05f;
+
 		//[StructLayout(LayoutKind.Sequential, Pack = 1)]
 
 		//private Vertex[] vertices;
@@ -64,6 +67,25 @@ namespace another_raytracer
 
 			if (input.IsKeyDown(Key.Escape))
 				Exit();
+
+			if (input.IsKeyDown(Key.Space))
+				world.CamPos = new Vector3(world.CamPos.X, world.CamPos.Y + camspeed, world.CamPos.Z);
+			else if (input.IsKeyDown(Key.LControl))
+				world.CamPos = new Vector3(world.CamPos.X, world.CamPos.Y - camspeed, world.CamPos.Z);
+
+			if (input.IsKeyDown(Key.W))
+				world.CamPos = world.CamPos + Vector3.Transform(World.CamDir, world.CamRot) * camspeed;
+			else if (input.IsKeyDown(Key.S))
+				world.CamPos = world.CamPos - Vector3.Transform(World.CamDir, world.CamRot) * camspeed;
+			if (input.IsKeyDown(Key.A))
+				world.CamPos = world.CamPos + Vector3.Transform(World.CamDir, world.CamRot * Matrix3.CreateRotationY(-pi2)) * camspeed;
+			else if (input.IsKeyDown(Key.D))
+				world.CamPos = world.CamPos + Vector3.Transform(World.CamDir, world.CamRot * Matrix3.CreateRotationY(pi2)) * camspeed;
+
+			if (input.IsKeyDown(Key.Left))
+				world.CamRot *= Matrix3.CreateRotationY(-0.174533f);
+			else if (input.IsKeyDown(Key.Right))
+				world.CamRot *= Matrix3.CreateRotationY(0.174533f);
 
 		}
 
@@ -163,6 +185,7 @@ namespace another_raytracer
 		{
 			//ThreadPool.SetMaxThreads(20, 20);
 			(new Game(400, 225, "ray tracing")).Run(60.0);
+			//(new Game(640, 480, "ray tracing")).Run(60.0);
 		}
 	}
 }

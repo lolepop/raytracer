@@ -20,6 +20,10 @@ namespace another_raytracer
 		float Specular { get; set; }
 		float Shininess { get; set; }
 
+		// other material properties
+		float Reflectivity { get; set; }
+
+
 		(float i1, float i2) Intersect(Ray ray);
 		Vector3 CalcNormal(Vector3 intersection, bool bias = false);
 	}
@@ -64,6 +68,8 @@ namespace another_raytracer
 		public float Diffuse { get; set; } = 1000f;
 		public float Specular { get; set; } = 10f;
 		public float Shininess { get; set; } = 1.05f;
+
+		public float Reflectivity { get; set; } = 0f;
 
 		public Sphere(Vector3 pos, float radius)
 		{
